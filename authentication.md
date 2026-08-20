@@ -2,220 +2,88 @@
 
 ## Objective
 
-The objective of the authentication testing phase was to evaluate the security controls protecting user accounts and authentication within the agreed assessment scope.
+The objective of this phase was to evaluate the authentication controls protecting user accounts within the Kriva application.
 
-Testing focused on:
+Testing focused on password security, protection against repeated login attempts, multi-factor authentication (MFA), and session handling.
 
-- Brute-force protection
-- Password security
-- Multi-factor authentication
-- Session storage and token handling
+## Testing Performed
 
-All testing was performed using authorized test accounts created specifically for the assessment.
+Authentication testing was conducted using dedicated test accounts within the authorized scope.
 
-## Scope
+The following areas were assessed:
 
-Authentication testing was limited to the authentication functionality and assets defined in `scope.md`.
+* Password requirements
+* Brute-force and rate-limiting protection
+* Multi-factor authentication
+* Session and token handling
+* Browser storage of authentication and application data
 
-No unauthorized accounts were accessed or tested.
+## Key Observations
 
-## Tools
+### Password Security
 
-The following tools were used during the authentication assessment:
+The registration process was tested using a deliberately weak password.
 
-- Browser Developer Tools
-- Network panel
-- Application / Storage inspection
-- HTTP request inspection
+The application accepted the weak password without enforcing stronger password requirements or displaying a password-strength warning.
 
-## Authentication Mechanism
+This showed that password controls could be strengthened to reduce the risk of users selecting easily guessable credentials.
 
-Authentication traffic was observed through the browser's Network panel.
+**Assessment:** Medium–High
 
-The application used Supabase authentication with a password-based login flow.
+### Brute-Force Protection
 
-Authentication requests were observed using the standard Supabase authentication endpoint.
+Repeated incorrect login attempts were performed against an authorized test account.
 
-Sensitive authentication tokens and complete API credentials have intentionally been excluded from this public repository.
+More than ten consecutive failed attempts were accepted without an observed account lockout, CAPTCHA challenge, increasing delay, or other visible rate-limiting mechanism.
 
-## 1. Brute-Force Protection
+This could increase exposure to automated password guessing and credential-stuffing attacks.
 
-### Test
+**Assessment:** Medium–High
 
-Repeated failed login attempts were performed against an authorized test account to determine whether the application implemented protections against automated password guessing.
+### Multi-Factor Authentication
 
-More than ten consecutive incorrect login attempts were performed.
+The application was reviewed for additional authentication controls.
 
-### Observation
+No visible option for enabling two-factor or multi-factor authentication was identified during normal navigation of the tested account.
 
-Each attempt returned the same invalid login response.
+Without an additional authentication factor, account security depends primarily on the strength and protection of user credentials.
 
-During the test:
+**Assessment:** Low–Medium
 
-- No increasing response delay was observed.
-- No CAPTCHA or additional authentication challenge appeared.
-- No temporary account lockout occurred.
-- No visible rate-limiting control was triggered.
+### Session and Local Storage
 
-### Assessment
+Browser Developer Tools were used to review authentication state and locally stored application data after login.
 
-The assessment did not identify an effective client-visible brute-force protection mechanism during the performed test.
+The assessment identified that authentication session information, including a JWT access token, was stored in browser Local Storage.
 
-This increases the risk of automated password guessing and credential-stuffing attacks, particularly when combined with weak password requirements and the absence of multi-factor authentication.
+Financial information was also observed in locally cached application data.
 
-**Risk rating:** Medium–High
+Because Local Storage is accessible to JavaScript running within the application's origin, secure protection against client-side script execution remains particularly important.
 
-### Recommendation
+**Assessment:** Medium
 
-Implement additional protection against repeated failed authentication attempts, such as:
+## Security Impact
 
-- Rate limiting
-- Temporary account lockout
-- CAPTCHA or challenge mechanisms after repeated failures
-- Monitoring and alerting for abnormal authentication activity
+The authentication findings are more significant when considered together.
 
-## 2. Password Security
+Weak password requirements can increase the likelihood of guessable credentials, while limited protection against repeated login attempts provides additional opportunities to test those credentials. The absence of MFA removes another defensive layer that could otherwise help protect compromised accounts.
 
-### Test
+Session and sensitive data stored client-side also require strong protection against client-side security vulnerabilities.
 
-The registration process was tested to determine whether weak passwords were rejected.
+## Recommendations
 
-A deliberately weak password consisting of simple sequential digits was submitted during registration using an authorized test account.
+The assessment recommended strengthening authentication security by:
 
-### Observation
+* Enforcing stronger password requirements
+* Implementing protection against repeated failed login attempts
+* Considering MFA for accounts accessing sensitive information
+* Reviewing the storage of authentication tokens and sensitive financial data
+* Minimising unnecessary sensitive information stored in the browser
 
-The application accepted the weak password without:
+## Outcome
 
-- Password-strength warnings
-- Complexity requirements
-- Rejection based on password weakness
+Authentication testing identified opportunities to strengthen account protection and session security.
 
-Email verification was successfully completed and the account became active.
+These findings were included in the overall risk assessment and remediation recommendations for the application.
 
-### Assessment
-
-The assessment identified insufficient enforcement of password strength requirements.
-
-Allowing easily guessed passwords increases account-takeover risk, particularly when combined with the observed lack of visible brute-force protection.
-
-**Risk rating:** Medium–High
-
-### Recommendation
-
-Strengthen password controls by considering:
-
-- Appropriate minimum password length
-- Password-strength evaluation
-- Blocking commonly used or compromised passwords
-- Checking passwords against known breached-password datasets
-- Clear feedback to users when selecting weak passwords
-
-## 3. Multi-Factor Authentication
-
-### Test
-
-The application interface was reviewed to determine whether users could enable multi-factor authentication or access dedicated account-security settings.
-
-### Observation
-
-No visible option for enabling two-factor or multi-factor authentication was identified through normal navigation.
-
-No dedicated security settings page providing MFA configuration was found.
-
-### Assessment
-
-The absence of an available second authentication factor means that account security depends primarily on the user's password.
-
-This is particularly relevant because the assessment also identified weak password requirements and no visible brute-force protection.
-
-The lack of MFA was treated as a missing security control rather than a standalone exploitable vulnerability.
-
-**Risk rating:** Low–Medium
-
-### Recommendation
-
-Consider providing MFA as an optional or required security control, particularly for accounts with access to sensitive financial information or third-party accounting integrations.
-
-## 4. Session and Local Storage Security
-
-### Test
-
-Browser Developer Tools were used to inspect session storage after successful authentication.
-
-The Application / Storage panel was reviewed to determine how authentication state and sensitive application data were stored in the browser.
-
-### Observation
-
-The application did not use traditional cookies for the primary authenticated session during the observed test.
-
-Instead, the authentication session was stored in browser Local Storage.
-
-The stored authentication data included an access token in JWT format.
-
-The assessment also identified locally cached financial information stored in browser Local Storage.
-
-The cached data included financial information such as:
-
-- Cash
-- Monthly revenue
-- Monthly expenses
-- Total debt
-- Other financial values
-
-### Assessment
-
-Data stored in Local Storage can be accessed by JavaScript executing within the application's origin.
-
-This creates additional exposure if a client-side script execution vulnerability were ever introduced.
-
-The authentication token storage therefore becomes more security-relevant when considered together with Content-Security-Policy weaknesses identified elsewhere in the assessment.
-
-Local caching of financial data also increases exposure on shared or compromised client devices.
-
-**Risk rating:** Medium
-
-### Recommendation
-
-Review whether sensitive session and financial information needs to remain accessible through Local Storage.
-
-Where technically appropriate:
-
-- Minimise storage of sensitive information in the browser.
-- Reduce unnecessary client-side caching of financial data.
-- Maintain strong protections against client-side script execution.
-- Review authentication storage architecture and available secure session-management options.
-
-## Authentication Findings Summary
-
-The authentication phase identified several related security concerns:
-
-| Finding | Assessment |
-| --- | --- |
-| No visible brute-force protection during testing | Medium–High |
-| Weak passwords accepted | Medium–High |
-| No visible MFA option | Low–Medium |
-| Session token and financial information stored in Local Storage | Medium |
-
-These findings should be considered together rather than only as isolated issues.
-
-Weak password requirements increase the likelihood of guessable credentials, limited brute-force protection increases the opportunity to attempt those credentials, and the absence of MFA removes an additional defensive layer against account takeover.
-
-## Positive Observations
-
-The authentication assessment was performed entirely with dedicated authorized test accounts.
-
-No unauthorized user accounts were targeted.
-
-Sensitive credentials and complete authentication tokens have intentionally been excluded from this public documentation.
-
-## Conclusion
-
-The main security concerns identified during authentication testing related to account protection rather than the core data-access architecture.
-
-The assessment identified opportunities to strengthen password security, resistance to repeated authentication attempts, MFA availability, and client-side session storage.
-
-These observations were included in the overall risk assessment and remediation recommendations.
-
-## Next Phase
-
-The next assessment phase focused on authorization and access-control testing, including verification of whether authenticated users could access resources belonging to other test accounts.
+Sensitive credentials, authentication tokens, and account-specific information have intentionally been excluded from this public documentation.
