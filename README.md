@@ -35,6 +35,19 @@ The assessment followed a structured testing process:
 6. **Security Configuration Review** – Reviewing HTTPS, security headers, CORS, and related configuration.
 7. **Risk Assessment** – Classifying identified findings and developing remediation recommendations.
 
+## Assessment Documentation
+
+Detailed documentation for each phase of the assessment:
+
+- [Assessment Scope](scope.md)
+- [Reconnaissance](reconnaissance.md)
+- [API Mapping](api-mapping.md)
+- [Authentication Testing](authentication.md)
+- [Authorization Testing](authorization.md)
+- [Input Validation Testing](input-validation.md)
+- [Security Configuration Review](security-configuration.md)
+- [Security Findings](findings.md)
+
 ## Tools & Technologies
 
 - Burp Suite
